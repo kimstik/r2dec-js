@@ -10,21 +10,26 @@ on:
   workflow_dispatch:
     inputs:
       r2_version:
-        description: 'Radare2 version'
-        default: '6.0.8'
+        description: 'Radare2 version (leave empty for latest)'
 
 # Automatically cancel any previous workflow on new push.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
-env:
-  R2V: ${{ inputs.r2_version || '6.0.8' }}
-
 jobs:
   sources:
     runs-on: ubuntu-latest
     steps:
+    - name: Get R2 version
+      run: |
+        if [ -n "${{ inputs.r2_version }}" ]; then
+          R2V="${{ inputs.r2_version }}"
+        else
+          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        echo "R2V=$R2V" >> $GITHUB_ENV
+        echo "Using radare2 version: $R2V"
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
@@ -45,6 +50,15 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
+    - name: Get R2 version
+      run: |
+        if [ -n "${{ inputs.r2_version }}" ]; then
+          R2V="${{ inputs.r2_version }}"
+        else
+          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        echo "R2V=$R2V" >> $GITHUB_ENV
+        echo "Using radare2 version: $R2V"
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
@@ -120,6 +134,16 @@ jobs:
   w64:
     runs-on: windows-latest
     steps:
+    - name: Get R2 version
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.r2_version }}" ]; then
+          R2V="${{ inputs.r2_version }}"
+        else
+          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        echo "R2V=$R2V" >> $GITHUB_ENV
+        echo "Using radare2 version: $R2V"
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
@@ -166,6 +190,16 @@ jobs:
   w32:
     runs-on: windows-latest
     steps:
+    - name: Get R2 version
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.r2_version }}" ]; then
+          R2V="${{ inputs.r2_version }}"
+        else
+          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        echo "R2V=$R2V" >> $GITHUB_ENV
+        echo "Using radare2 version: $R2V"
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
