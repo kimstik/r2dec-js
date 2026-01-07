@@ -8,6 +8,10 @@ on:
     branches:
     - master
   workflow_dispatch:
+    inputs:
+      r2_version:
+        description: 'Radare2 version'
+        default: '6.0.8'
 
 # Automatically cancel any previous workflow on new push.
 concurrency:
@@ -15,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  R2V: 6.0.7
+  R2V: ${{ inputs.r2_version || '6.0.8' }}
 
 jobs:
   sources:
