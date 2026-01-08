@@ -16,37 +16,27 @@ jobs:
         echo "version=$LATEST" >> $GITHUB_OUTPUT
         echo "Latest r2 version: $LATEST"
 
-    - name: Restore cached version
-      id: cache
-      uses: actions/cache/restore@v4
-      with:
-        path: .last-r2-version
-        key: last-r2-version
-
-    - name: Check if new release
-      id: compare
+    - name: Check if artifacts exist
+      id: artifacts
       run: |
-        LATEST="${{ steps.check.outputs.version }}"
-        CACHED=$(cat .last-r2-version 2>/dev/null || echo "")
-        echo "Cached: $CACHED"
-        echo "Latest: $LATEST"
-        if [ "$LATEST" != "$CACHED" ] && [ -n "$LATEST" ]; then
-          echo "new_release=true" >> $GITHUB_OUTPUT
-          echo "$LATEST" > .last-r2-version
+        VERSION="${{ steps.check.outputs.version }}"
+        echo "Checking artifacts for version: $VERSION"
+        ARTIFACTS=$(gh api repos/${{ github.repository }}/actions/artifacts --jq ".artifacts[].name" | grep "r2dec.*${VERSION}" || echo "")
+        if [ -n "$ARTIFACTS" ]; then
+          echo "Found artifacts:"
+          echo "$ARTIFACTS"
+          echo "exists=true" >> $GITHUB_OUTPUT
         else
-          echo "new_release=false" >> $GITHUB_OUTPUT
+          echo "No artifacts found for version $VERSION"
+          echo "exists=false" >> $GITHUB_OUTPUT
         fi
-
-    - name: Save cached version
-      if: steps.compare.outputs.new_release == 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: .last-r2-version
-        key: last-r2-version-${{ steps.check.outputs.version }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Trigger CI workflow
-      if: steps.compare.outputs.new_release == 'true'
+      if: steps.artifacts.outputs.exists == 'false'
       run: |
+        echo "Triggering CI for version ${{ steps.check.outputs.version }}"
         gh workflow run ci.yml -R ${{ github.repository }} -f r2_version=${{ steps.check.outputs.version }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
