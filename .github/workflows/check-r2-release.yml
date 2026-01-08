@@ -2,7 +2,7 @@ name: Check r2 release
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # daily at 6:00 UTC
+    - cron: '0 * * * *'  # hourly
   workflow_dispatch:
 
 jobs:
@@ -47,7 +47,7 @@ jobs:
     - name: Trigger CI workflow
       if: steps.compare.outputs.new_release == 'true'
       run: |
-        gh workflow run ci.yml -f r2_version=${{ steps.check.outputs.version }}
+        gh workflow run ci.yml -R ${{ github.repository }} -f r2_version=${{ steps.check.outputs.version }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
