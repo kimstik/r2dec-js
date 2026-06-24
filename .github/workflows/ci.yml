@@ -26,7 +26,11 @@ jobs:
         if [ -n "${{ inputs.r2_version }}" ]; then
           R2V="${{ inputs.r2_version }}"
         else
-          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+          R2V=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        if [ -z "$R2V" ] || [ "$R2V" = "null" ]; then
+          echo "Failed to determine radare2 version" >&2
+          exit 1
         fi
         echo "R2V=$R2V" >> $GITHUB_ENV
         echo "Using radare2 version: $R2V"
@@ -56,7 +60,11 @@ jobs:
         if [ -n "${{ inputs.r2_version }}" ]; then
           R2V="${{ inputs.r2_version }}"
         else
-          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+          R2V=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        if [ -z "$R2V" ] || [ "$R2V" = "null" ]; then
+          echo "Failed to determine radare2 version" >&2
+          exit 1
         fi
         echo "R2V=$R2V" >> $GITHUB_ENV
         echo "Using radare2 version: $R2V"
@@ -142,7 +150,11 @@ jobs:
         if [ -n "${{ inputs.r2_version }}" ]; then
           R2V="${{ inputs.r2_version }}"
         else
-          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+          R2V=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        if [ -z "$R2V" ] || [ "$R2V" = "null" ]; then
+          echo "Failed to determine radare2 version" >&2
+          exit 1
         fi
         echo "R2V=$R2V" >> $GITHUB_ENV
         echo "Using radare2 version: $R2V"
@@ -199,7 +211,11 @@ jobs:
         if [ -n "${{ inputs.r2_version }}" ]; then
           R2V="${{ inputs.r2_version }}"
         else
-          R2V=$(curl -s https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+          R2V=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/radareorg/radare2/releases/latest | jq -r .tag_name)
+        fi
+        if [ -z "$R2V" ] || [ "$R2V" = "null" ]; then
+          echo "Failed to determine radare2 version" >&2
+          exit 1
         fi
         echo "R2V=$R2V" >> $GITHUB_ENV
         echo "Using radare2 version: $R2V"
