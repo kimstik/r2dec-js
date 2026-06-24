@@ -8,10 +8,12 @@ import avr from './arch/avr.js';
 import dalvik from './arch/dalvik.js';
 import m68k from './arch/m68k.js';
 import mips from './arch/mips.js';
+import nds32 from './arch/nds32.js';
 import ppc from './arch/ppc.js';
 import riscv from './arch/riscv.js';
 import sh from './arch/sh.js';
 import sparc from './arch/sparc.js';
+import stm8 from './arch/stm8.js';
 import v850 from './arch/v850.js';
 import wasm from './arch/wasm.js';
 import x86 from './arch/x86.js';
@@ -25,10 +27,12 @@ export default {
 	dalvik: dalvik,
 	m68k: m68k,
 	mips: mips,
+	nds32: nds32,
 	ppc: ppc,
 	riscv: riscv,
 	sh: sh,
 	sparc: sparc,
+	stm8: stm8,
 	v850: v850,
 	wasm: wasm,
 	x86: x86,
