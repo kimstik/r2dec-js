@@ -45,7 +45,7 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: r2dec-${{env.R2V}}-src-with-deps.zip
-        retention-days: 400
+        retention-days: 90
         path: |
           .
           !.git/
@@ -81,7 +81,7 @@ jobs:
         sudo dpkg -i *.deb
     - name: make build
       run: |
-        meson setup build
+        meson setup --buildtype=minsize -Db_lto=true -Dc_args="-ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables" -Dc_link_args="-Wl,--gc-sections" build
         sudo ninja -C build install
     - name: test with javascript files
       run: |
@@ -96,11 +96,12 @@ jobs:
     - name: zip it up
       run: |
         cp -f build/libcore_pdd.so .
+        strip --strip-unneeded libcore_pdd.so
         zip r2dec_${{env.R2V}}_linux_amd64.zip libcore_pdd.so
     - uses: actions/upload-artifact@v7
       with:
         name: r2dec_${{env.R2V}}_linux_amd64.zip
-        retention-days: 400
+        retention-days: 90
         path: r2dec_${{env.R2V}}_linux_amd64.zip
 #    - name: packaging
 #      run: make -C p/dist/debian
@@ -163,9 +164,28 @@ jobs:
       with:
         python-version: 3.10.x
     - name: Preparing msvc toolchain
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
+      shell: pwsh
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $installPath) { Write-Error 'VS with VC tools not found'; exit 1 }
+        $vcvars = Join-Path $installPath 'VC\Auxiliary\Build\vcvarsall.bat'
+        $before = @{}
+        cmd /c 'set' | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { $before[$matches[1]] = $matches[2] } }
+        cmd /c "`"$vcvars`" x64 >nul 2>&1 && set" | ForEach-Object {
+          if ($_ -match '^([^=]+)=(.*)$') {
+            $name = $matches[1]; $val = $matches[2]
+            if ($before[$name] -ne $val) {
+              if ($name -ieq 'PATH') {
+                $old = @{}
+                ($before[$name] -split ';') | Where-Object { $_ } | ForEach-Object { $old[$_] = $true }
+                ($val -split ';') | Where-Object { $_ -and -not $old[$_] } | ForEach-Object { Add-Content -Path $env:GITHUB_PATH -Value $_ }
+              } elseif ($name -notmatch '^(GITHUB_|RUNNER_)') {
+                Add-Content -Path $env:GITHUB_ENV -Value "$name=$val"
+              }
+            }
+          }
+        }
     - name: dependencies
       shell: bash
       run: |
@@ -189,7 +209,7 @@ jobs:
         set BINDIR=%CD%\radare2\bin
         set PLUGINDIR=%CD%\radare2\lib\plugins
         set ARCH=x64
-        meson setup --buildtype=release -Dr2_incdir="radare2\include\libr" build || exit /b 666
+        meson setup --buildtype=minsize "-Dc_args=/Gy /Gw" "-Dc_link_args=/OPT:REF /OPT:ICF" -Dr2_incdir="radare2\include\libr" build || exit /b 666
         ninja -C build || exit /b 666
         mkdir %DESTDIR%
         copy build\*.dll %DESTDIR% || exit /b 666
@@ -200,7 +220,7 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: r2dec-${{env.R2V}}-w64.zip
-        retention-days: 400
+        retention-days: 90
         path: r2dec-plugin
   w32:
     runs-on: windows-latest
@@ -224,9 +244,28 @@ jobs:
       with:
         python-version: 3.10.x
     - name: Preparing msvc toolchain
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x86
+      shell: pwsh
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $installPath) { Write-Error 'VS with VC tools not found'; exit 1 }
+        $vcvars = Join-Path $installPath 'VC\Auxiliary\Build\vcvarsall.bat'
+        $before = @{}
+        cmd /c 'set' | ForEach-Object { if ($_ -match '^([^=]+)=(.*)$') { $before[$matches[1]] = $matches[2] } }
+        cmd /c "`"$vcvars`" x86 >nul 2>&1 && set" | ForEach-Object {
+          if ($_ -match '^([^=]+)=(.*)$') {
+            $name = $matches[1]; $val = $matches[2]
+            if ($before[$name] -ne $val) {
+              if ($name -ieq 'PATH') {
+                $old = @{}
+                ($before[$name] -split ';') | Where-Object { $_ } | ForEach-Object { $old[$_] = $true }
+                ($val -split ';') | Where-Object { $_ -and -not $old[$_] } | ForEach-Object { Add-Content -Path $env:GITHUB_PATH -Value $_ }
+              } elseif ($name -notmatch '^(GITHUB_|RUNNER_)') {
+                Add-Content -Path $env:GITHUB_ENV -Value "$name=$val"
+              }
+            }
+          }
+        }
     - name: dependencies
       shell: bash
       run: |
@@ -250,7 +289,7 @@ jobs:
         set BINDIR=%CD%\radare2\bin
         set PLUGINDIR=%CD%\radare2\lib\plugins
         set ARCH=x86
-        meson setup --buildtype=release -Dr2_incdir="radare2\include\libr" build || exit /b 666
+        meson setup --buildtype=minsize "-Dc_args=/Gy /Gw" "-Dc_link_args=/OPT:REF /OPT:ICF" -Dr2_incdir="radare2\include\libr" build || exit /b 666
         ninja -C build || exit /b 666
         mkdir %DESTDIR%
         copy build\*.dll %DESTDIR% || exit /b 666
@@ -261,5 +300,5 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: r2dec-${{env.R2V}}-w32.zip
-        retention-days: 400
+        retention-days: 90
         path: r2dec-plugin
